@@ -1,7 +1,9 @@
 import axios from 'axios'
 
 /** API 基础 URL。 */
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000'
+// 在开发环境中，使用相对路径通过 vite 代理；生产环境使用环境变量或默认值
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 
+  (import.meta.env.MODE === 'development' ? '/api' : 'http://localhost:8000/api')
 
 /** 创建 axios 实例。 */
 const apiClient = axios.create({
@@ -46,7 +48,7 @@ export async function uploadFile(file: File) {
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await apiClient.post('/api/upload', formData, {
+  const response = await apiClient.post('/upload', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
@@ -62,7 +64,7 @@ export async function uploadFile(file: File) {
  * @returns Promise，解析为预测结果数据。
  */
 export async function predictTrend(fileId: string, days: number = 1) {
-  const response = await apiClient.post('/api/predict', {
+  const response = await apiClient.post('/predict', {
     file_id: fileId,
     days: days,
   })
@@ -75,7 +77,7 @@ export async function predictTrend(fileId: string, days: number = 1) {
  * @returns Promise，解析为格式要求数据。
  */
 export async function getCSVFormat() {
-  const response = await apiClient.get('/api/upload/validate')
+  const response = await apiClient.get('/upload/validate')
   return response.data
 }
 
@@ -84,7 +86,7 @@ export async function getCSVFormat() {
  * @returns Promise，解析为服务状态数据。
  */
 export async function getPredictionStatus() {
-  const response = await apiClient.get('/api/predict/status')
+  const response = await apiClient.get('/predict/status')
   return response.data
 }
 

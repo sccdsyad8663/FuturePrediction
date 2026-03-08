@@ -57,6 +57,14 @@ set TUSHARE_TOKEN=your_token_here && python run_server.py
 ⚠️  警告: TUSHARE_TOKEN 未配置或使用默认值
 ```
 
+## 铁矿石等现价为空排查
+
+若页面上铁矿石（如 I2603）等合约的**现价显示为空**，多半是 **Tushare Token 未配置或无效**，不是 Tushare 没有该品种数据。
+
+1. **Docker 部署**：在项目根目录创建 `.env`，写入 `TUSHARE_TOKEN=你的有效Token`，然后执行 `docker-compose up -d`（compose 会读取该变量并传给 backend）。
+2. **本地运行**：在 `backend/.env` 或当前 shell 中设置有效的 `TUSHARE_TOKEN`。
+3. **诊断脚本**：在 backend 目录执行 `python check_iron_ore_price.py`。若日志出现「您的token不对，请确认」，说明需检查 Token 是否有效、是否已传入运行环境。
+
 ## 注意事项
 
 - `.env` 文件已添加到 `.gitignore`，不会提交到 Git

@@ -48,3 +48,20 @@ models/weights/
 uploads/
 temp/
 
+
+# Docker镜像文件
+*.tar
+*.tar.gz
+*.tarA
+
+# 密钥文件
+*.pem
+*.key
+
+# 数据文件
+*.csv
+*.sql
+
+# 临时文件
+future_prediction/*.tar
+future_prediction/*.tar.gz

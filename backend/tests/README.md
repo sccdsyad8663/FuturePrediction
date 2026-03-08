@@ -3,79 +3,77 @@
 ## 运行测试
 
 ### 运行所有测试
-
 ```bash
-cd backend
-source venv/bin/activate
 pytest
 ```
 
 ### 运行特定测试文件
-
 ```bash
-pytest tests/test_auth.py
-pytest tests/test_permissions.py
-pytest tests/test_auth_service.py
+pytest tests/test_price_update_service.py
 ```
 
 ### 运行特定测试类
-
 ```bash
-pytest tests/test_auth.py::TestUserRegistration
+pytest tests/test_price_update_service.py::TestGetFuturesSpotPrice
 ```
 
 ### 运行特定测试方法
-
 ```bash
-pytest tests/test_auth.py::TestUserRegistration::test_register_with_phone
+pytest tests/test_price_update_service.py::TestGetFuturesSpotPrice::test_get_price_success_with_symbol_column
 ```
 
 ### 显示详细输出
-
 ```bash
 pytest -v
-pytest -vv  # 更详细
 ```
 
 ### 显示打印输出
-
 ```bash
 pytest -s
 ```
 
-## 测试覆盖范围
+## 测试覆盖的场景
 
-### 认证功能测试 (`test_auth.py`)
+### get_futures_spot_price 方法测试
+- ✅ 成功获取价格（使用 'symbol' 列名）
+- ✅ 成功获取价格（使用中文列名）
+- ✅ 不区分大小写匹配
+- ✅ akshare 返回空数据
+- ✅ akshare 返回 None
+- ✅ 合约代码不存在
+- ✅ 找不到合约代码列
+- ✅ 找不到价格列
+- ✅ 价格值无法转换为浮点数
+- ✅ 价格值为 NaN
+- ✅ 网络错误处理
+- ✅ 超时错误处理
+- ✅ 多个匹配时返回第一个
+- ✅ 部分匹配合约代码
 
-- ✅ 用户注册（手机号、邮箱）
-- ✅ 用户登录（手机号、邮箱）
-- ✅ Token 验证
-- ✅ 获取当前用户信息
-- ✅ 用户登出
-- ✅ 预测次数限制查询
+### update_post_price 方法测试
+- ✅ 成功更新帖子价格
+- ✅ 帖子不存在
+- ✅ 帖子已删除
+- ✅ 帖子没有合约代码
+- ✅ 获取价格失败
+- ✅ 数据库更新失败
 
-### 权限测试 (`test_permissions.py`)
+### update_all_posts_price 方法测试
+- ✅ 成功批量更新所有帖子
+- ✅ 没有帖子
+- ✅ 异常处理
 
-- ✅ CSV 上传权限（普通用户/会员/管理员）
-- ✅ 预测权限（普通用户/会员）
-- ✅ 未登录用户访问控制
-
-### 认证服务测试 (`test_auth_service.py`)
-
-- ✅ 用户注册服务
-- ✅ 用户认证服务
-- ✅ 会话创建
-- ✅ 预测限制检查
-- ✅ 预测次数计数
-
-## 测试数据库
-
-测试使用 SQLite 内存数据库，每个测试函数都会创建新的数据库实例，测试结束后自动清理。
+### update_posts_by_contract_code 方法测试
+- ✅ 成功按合约代码更新
+- ✅ 获取价格失败
+- ✅ 没有匹配的帖子
+- ✅ 部分帖子更新失败
+- ✅ 数据库提交失败
 
 ## 注意事项
 
-1. 测试前确保已安装所有依赖：`pip install -r requirements.txt`
-2. 测试数据库是独立的，不会影响开发数据库
-3. 每个测试都是独立的，不会相互影响
-4. 测试文件上传功能时，会在 `uploads/` 目录创建临时文件，测试结束后会自动清理
+1. 这些测试使用 mock 对象，不会实际调用 akshare API
+2. 测试不会连接真实数据库
+3. 所有测试都是单元测试，测试隔离性良好
+4. 如果需要集成测试（实际调用 akshare），需要单独编写
 

@@ -71,7 +71,9 @@ export default function Login() {
       await login(loginData)
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.response?.data?.detail || '登录失败，请检查您的凭证')
+      // 优先显示错误消息，如果没有则显示默认消息
+      const errorMessage = err.message || err.response?.data?.detail || '登录失败，请检查您的凭证'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

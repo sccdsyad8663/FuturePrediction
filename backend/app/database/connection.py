@@ -4,7 +4,7 @@
 """
 
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import QueuePool
@@ -52,7 +52,10 @@ def get_db():
 def init_db():
     """初始化数据库。
 
-    创建所有表结构。仅在首次部署时调用。
+    创建扩展并创建所有表结构。仅在首次部署时调用。
     """
+    with engine.begin() as conn:
+        # 确保 uuid-ossp 扩展存在（用于 uuid_generate_v4）
+        conn.execute(text('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'))
     Base.metadata.create_all(bind=engine)
 

@@ -24,7 +24,9 @@ def hash_password(password: str) -> str:
         password = password[:72]
     
     # 生成盐并加密密码
-    salt = bcrypt.gensalt(rounds=12)
+    # 降低 rounds 以提高性能（10 -> 8），在开发环境中提高响应速度
+    # 生产环境可以根据服务器性能调整（建议 10-12）
+    salt = bcrypt.gensalt(rounds=8)
     hashed = bcrypt.hashpw(password, salt)
     
     # 返回字符串格式的哈希值

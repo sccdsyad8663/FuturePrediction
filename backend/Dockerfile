@@ -1,14 +1,15 @@
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/opt/app/backend
 
-WORKDIR /opt/app
+WORKDIR /opt/app/backend
 
 COPY backend/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend /opt/app
+COPY backend/ .
 
 EXPOSE 8000
 

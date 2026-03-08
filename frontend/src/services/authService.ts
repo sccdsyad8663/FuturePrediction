@@ -6,7 +6,9 @@
 import axios from 'axios'
 
 /** API 基础 URL。 */
-const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8000'
+// 在开发环境中，使用相对路径通过 vite 代理；生产环境使用环境变量或默认值
+const API_BASE_URL = (import.meta as any).env?.VITE_API_BASE_URL || 
+  (import.meta.env.MODE === 'development' ? '/api' : 'http://localhost:8000/api')
 
 /** 创建 axios 实例。 */
 const apiClient = axios.create({
@@ -14,6 +16,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10秒超时
 })
 
 /**
@@ -117,14 +120,29 @@ export interface UserInfo {
  * @returns 包含用户信息和 Token 的响应数据。
  */
 export async function login(data: LoginRequest) {
-  const response = await apiClient.post('/api/v1/auth/login', data)
-  const { token, user } = response.data
-  
-  if (token) {
-    setToken(token)
+  try {
+    const response = await apiClient.post('/v1/auth/login', data, {
+      timeout: 30000, // 30秒超时
+    })
+    const { token, user } = response.data
+    
+    if (token) {
+      setToken(token)
+    }
+    
+    return { user, token }
+  } catch (error: any) {
+    // 如果是超时错误，提供更明确的错误信息
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      throw new Error('登录请求超时，请检查网络连接或稍后重试')
+    }
+    // 如果是 401 错误，说明凭证错误
+    if (error.response?.status === 401) {
+      throw new Error(error.response?.data?.detail || '手机号/邮箱或密码错误')
+    }
+    // 其他错误
+    throw error
   }
-  
-  return { user, token }
 }
 
 /**
@@ -134,7 +152,7 @@ export async function login(data: LoginRequest) {
  * @returns 包含用户信息和 Token 的响应数据。
  */
 export async function register(data: RegisterRequest) {
-  const response = await apiClient.post('/api/v1/auth/register', data)
+  const response = await apiClient.post('/v1/auth/register', data)
   const { token, user } = response.data
   
   if (token) {
@@ -149,8 +167,13 @@ export async function register(data: RegisterRequest) {
  */
 export async function logout() {
   try {
-    await apiClient.post('/api/v1/auth/logout')
+    await apiClient.post('/v1/auth/logout')
+  } catch (error) {
+    // 即使后端登出失败，也清除本地 Token
+    // 这样可以处理 Token 已过期的情况
+    console.warn('登出请求失败，但已清除本地 Token:', error)
   } finally {
+    // 无论成功与否，都清除本地 Token
     removeToken()
   }
 }
@@ -161,8 +184,32 @@ export async function logout() {
  * @returns 用户信息。
  */
 export async function getCurrentUser(): Promise<UserInfo> {
-  const response = await apiClient.get('/api/v1/auth/me')
-  return response.data
+  console.log('[authService] 开始获取用户信息...')
+  const startTime = Date.now()
+  
+  try {
+    const response = await apiClient.get('/v1/auth/me', {
+      timeout: 8000, // 8秒超时，与 Dashboard 的超时时间一致
+    })
+    const elapsed = Date.now() - startTime
+    console.log(`[authService] 获取用户信息成功，耗时: ${elapsed}ms`, response.data)
+    return response.data
+  } catch (error: any) {
+    const elapsed = Date.now() - startTime
+    console.error(`[authService] 获取用户信息失败，耗时: ${elapsed}ms`, error)
+    
+    // 如果是 401 错误，说明 Token 无效，清除本地 Token
+    if (error.response?.status === 401) {
+      removeToken()
+      throw new Error('登录已过期，请重新登录')
+    }
+    
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      throw new Error('请求超时，请检查网络连接')
+    }
+    
+    throw error
+  }
 }
 
 /**
